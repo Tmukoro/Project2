@@ -1,9 +1,17 @@
 import React from "react";
 import { Box, Flex, Text, Button , Stack,Input, Dialog, Portal, Field, CloseButton, Table, Select, Tabs} from "@chakra-ui/react";
 import taskStore from "./taskStore";
-import { FaPencilAlt } from "react-icons/fa";
-import { MdAdd, MdDelete } from "react-icons/md";
 import { useState } from "react";
+
+
+import { FaPencilAlt } from "react-icons/fa";
+import { MdAdd, MdDelete} from "react-icons/md";
+import { FaRegCalendarCheck } from "react-icons/fa6";
+import { GoClock } from "react-icons/go";
+import { IoChatbubbleOutline, IoBookmarksOutline } from "react-icons/io5";
+import { CiMail, CiSettings } from "react-icons/ci";
+import { PiMedalThin } from "react-icons/pi";
+
 
 
 
@@ -13,12 +21,14 @@ const MainPage = ()=>{
     const tasks = taskStore((state)=> state.tasks)
     const addTasks = taskStore((state)=> state.addTask);
     const toggleTaskStatus = taskStore((state)=> state.toggleTaskStatus);
-    const deleteTask = taskStore((state)=> state.removeTask);
+    const removeTask = taskStore((state)=> state.removeTask);
 
     const [taskName, setTaskName] = useState('');
     const[deadline, setDeadline] = useState('');
     const[assignee, setAssignee] = useState('');
     const[open, setOpen] = useState(false);
+    const[selectedTask, setSelectedTask] = useState(null);
+    const[comment, setComment] = useState('');
 
     const submit = async (e)=>{
         e.preventDefault();
@@ -31,7 +41,8 @@ const MainPage = ()=>{
             addTasks({
                 name: taskName,
                 deadline,
-                assignee
+                assignee,
+                status: 'Pending'
             });
             setTaskName('');
             setDeadline('');
@@ -43,11 +54,45 @@ const MainPage = ()=>{
         
     }
 
-    const handleDeleteTask = (taskId, taskName) => {
+    const handleRemoveTask = (taskId, taskName) => {
         const confirmed = window.confirm(`Are you sure you want to delete "${taskName}"?`);
         if (confirmed) {
-            deleteTask(taskId);
+            removeTask(taskId);
         }
+    }
+
+    const handleTaskClick = (task) => {
+
+      if(selectedTask?.id === task.id){
+        setSelectedTask(null);
+      }else{
+        setSelectedTask(task);
+      }
+        setComment(''); 
+    }
+
+    const handleCommentSubmit = (e) => {
+        e.preventDefault();
+        if (comment.trim()) {
+            console.log('Comment for task:', selectedTask.id, 'Comment:', comment);
+            alert(`Comment added: ${comment}`);
+            setComment('');
+        }
+    }
+
+
+    const statusColor = (status)=> {
+      const normalStatusClolor = Array.isArray(status) ? status[0] : status;
+      switch(normalStatusClolor){
+        case 'Complete':
+          return 'green';
+          case 'Pending':
+            return 'red';
+          
+            default:
+              console.log('using default color' , status)
+              return 'white';
+      }
     }
 
 
@@ -56,7 +101,19 @@ const MainPage = ()=>{
 
         {/* SIDE NAVBAR */}
 
-        <Box bg={'purple'} w={'60px'} h={'630px'} display={'flex'} float={'left'}></Box>
+        <Box bg={'purple'} w={'60px'} h={'630px'}  float={'left'}>
+          <Text fontWeight={'bold'} fontSize={20} color={'white'} pt={5} textAlign={'center'}>TS</Text>
+          <Stack gap={10} alignSelf={'center'} p={4} mt={14}>
+          <FaRegCalendarCheck size={22}  />
+          <GoClock size={22} />
+          <IoChatbubbleOutline size={22} />
+          <CiMail size={22} />
+          <PiMedalThin size={22} />
+          <CiSettings size={24}/>
+          <IoBookmarksOutline size={22} />
+
+          </Stack>
+        </Box>
 
         {/* TASK BOX */}
         <Box bg={'blue'} w={'1100px'} h={'630px'}>
@@ -154,7 +211,13 @@ const MainPage = ()=>{
 
      <Tabs.Content value="taskList">
 
-   <Box h={'500px'} p={3}>
+      {/* TASK INPUT DISPLAY */}
+
+   <Box h={'450px'} pl={3} pb={20} overflowY={'auto'} css={{
+     '&::-webkit-scrollbar': { display: 'none' },
+     '-ms-overflow-style': 'none',
+     'scrollbar-width': 'none'
+   }}>
 
  <Table.Root size="sm">
 <Table.Header>
@@ -168,16 +231,27 @@ const MainPage = ()=>{
 </Table.Header>
 <Table.Body>
 {tasks.map((task) => (
-  <Table.Row key={task.id} bg={'white'}>
+  <Table.Row 
+    key={task.id} 
+    bg={selectedTask?.id === task.id ? 'wheat' : 'white'}
+    _hover={{ bg: selectedTask?.id === task.id ? 'wheat' : 'gray.50' }}
+    cursor={'pointer'}
+    onClick={() => handleTaskClick(task)}
+
+  >
     <Table.Cell color={'black'}>{task.name}</Table.Cell>
     <Table.Cell color={'black'}>{task.deadline}</Table.Cell>
 
-<Table.Cell>
-  <Select.Root color={'black'} value={task.status} onValueChange={(details)=> toggleTaskStatus(task.id, details.value)}>
+<Table.Cell onClick={(e) => e.stopPropagation()}>
+  <Select.Root color={'black'} value={task.status}
+   onValueChange={(details)=> toggleTaskStatus(task.id, details.value)}
+   >
 
 <Select.Control>
-<Select.Trigger w={100}>
-<Select.ValueText  placeholder={task.status} />
+<Select.Trigger w={100} bg={statusColor(task.status)}
+borderColor={statusColor(task.status)}
+>
+<Select.ValueText  placeholder={task.status || 'Pending'} />
 </Select.Trigger>
 </Select.Control>
 
@@ -189,7 +263,7 @@ const MainPage = ()=>{
 <Select.ItemIndicator />
 </Select.Item>
 <Select.Item item={'Complete'}>
-<Select.ItemText bg={'green'}>Complete</Select.ItemText>
+<Select.ItemText>Complete</Select.ItemText>
 <Select.ItemIndicator />
 </Select.Item>
 </Select.Content>
@@ -199,12 +273,12 @@ const MainPage = ()=>{
         
     </Table.Cell>
     <Table.Cell color={'black'} alignSelf={'end'}>{task.assignee}</Table.Cell>
-    <Table.Cell>
+    <Table.Cell onClick={(e) => e.stopPropagation()}>
       <Button 
         size="sm" 
         colorScheme="red" 
         variant="ghost"
-        onClick={() => handleDeleteTask(task.id, task.name)}
+        onClick={() => handleRemoveTask(task.id, task.name)}
       >
         <MdDelete />
       </Button>
@@ -224,7 +298,7 @@ const MainPage = ()=>{
                     <Tabs.Content value="performance">
 
                       <Box h={'500px'}>
-                        <Text>Nothing to see here</Text>
+                        <Text color={'black'}>Nothing to see here</Text>
                       </Box>
                       
                       
@@ -246,8 +320,51 @@ const MainPage = ()=>{
 
          <Box bg={'red'} w={'340px'} h={'630px'} float={'left'}>
 
+            {selectedTask ? (
+                <Box bg={'white'} p={4} h={'100%'} pt={10}>
+                    <Text fontSize={18} fontWeight={'bold'} color={'black'} mb={4}>Task Details</Text>
+                    
+                    <Box pt={10} pl={2} mb={4} >
+                      <Stack gap={5} alignItems={'start'}>
+                      <Text fontWeight={'bold'} color={'black'} mb={2}>Task Name: {selectedTask.name}</Text>
+                        
+                        <Text fontWeight={'bold'} color={'black'} mb={2}>Deadline: {selectedTask.deadline}</Text>
+                        
+                        <Text fontWeight={'bold'} color={'black'} mb={2}>Status: {selectedTask.status}</Text>
+                        
+                        <Text fontWeight={'bold'} color={'black'} mb={2}>Assigned to: {selectedTask.assignee}</Text>                        
 
-        
+                      </Stack>
+                    </Box>
+
+                    <Box>
+                        <Text fontWeight={'bold'} color={'black'} pl={2} mb={2} textAlign={'start'}>Add Comment:</Text>
+                        <form onSubmit={handleCommentSubmit}>
+                            <Input
+                                placeholder="Enter your comment..."
+                                value={comment}
+                                onChange={(e) => setComment(e.target.value)}
+                                mb={2}
+                                bg={'gray.50'}
+                            />
+                            <Button 
+                                type="submit" 
+                                size="sm" 
+                                colorScheme="blue"
+                                disabled={!comment.trim()}
+                            >
+                                Add Comment
+                            </Button>
+                        </form>
+                    </Box>
+                </Box>
+            ) : (
+                <Box bg={'white'} p={4} h={'100%'} display={'flex'} alignItems={'center'} justifyContent={'center'}>
+                    <Text color={'gray.500'} textAlign={'center'}>
+                        Click on a task to view details
+                    </Text>
+                </Box>
+            )}
 
            </Box> 
 

@@ -8,7 +8,7 @@ const taskStore = create(persist((set)=>({
 
     addTask: (task)=>
         set((state)=>({
-            tasks: [...state.tasks, {...task, id: Date.now(), status: 'Pending'}]
+            tasks: [...state.tasks, {...task, id: Date.now(), status: task.status || 'Pending'}]
         })),
 
         toggleTaskStatus: (id, newStatus)=>
