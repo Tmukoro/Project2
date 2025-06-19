@@ -1,12 +1,15 @@
-# React + Vite
+# Components Used
+- React + Vite
+- Javascript
+- Zustand
+- Chakra UI
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-Currently, two official plugins are available:
+## Brief Description
+A basic web app used to store and view task. This is just a simple project i made to aid me in learning how to write a react code along with understanding the concepts of how the various tools used in it work such as zustand for storing current data without it being deleted on refresh and basic chakra ui components in designing the page itself with all this i have mamnaged to grasp a basic understanding of how these tools work 
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Basic Features Present
+- Adding task function
+- Ability to delelte a task once added
+- Toggle feature for toggling between Complete and Pending Status
+- Expanded view of current task selected feature
